@@ -15,3 +15,5 @@ Start by running `npm install` inside the project folder
 
 ## Deployed Application
 You can access the live application here: [Pokedex on Render](https://fullstackopen-cicd-o6rb.onrender.com)
+
+<!-- Testing Part 5 pull request trigger -->
