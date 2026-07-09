@@ -31,6 +31,18 @@ jobs:
       - name: Trigger deployment
         if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
         run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+      - name: Test Success Notification
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Deployment Successful! A new version deployed to production."}' \
+          "${{ secrets.DISCORD_WEBHOOK }}"
+      - name: Test Failure Notification
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Build Failed! The pipeline encountered an error."}' \
+          "${{ secrets.DISCORD_WEBHOOK }}"
 
   tag_release:
     needs: [simple_deployment_pipeline]
