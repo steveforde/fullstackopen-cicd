@@ -9,7 +9,7 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  simple_deployment_pipeline:
+  build_and_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -28,24 +28,17 @@ jobs:
         run: npx playwright install --with-deps
       - name: Run Playwright tests
         run: npm run test:e2e
+
+  deploy:
+    needs: [build_and_test]
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
+    steps:
       - name: Trigger deployment
-        if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
         run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
-      - name: Test Success Notification
-        if: success()
-        run: |
-          curl -H "Content-Type: application/json" \
-          -d '{"content": "Deployment Successful! A new version deployed to production."}' \
-          "${{ secrets.DISCORD_WEBHOOK }}"
-      - name: Test Failure Notification
-        if: failure()
-        run: |
-          curl -H "Content-Type: application/json" \
-          -d '{"content": "Build Failed! The pipeline encountered an error."}' \
-          "${{ secrets.DISCORD_WEBHOOK }}"
 
   tag_release:
-    needs: [simple_deployment_pipeline]
+    needs: [deploy]
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
     steps:
@@ -55,3 +48,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
+
+  notify_success:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Success Notification
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Deployment Successful! A new version deployed to production."}' \
+          "${{ secrets.DISCORD_WEBHOOK }}"
+
+  notify_failure:
+    needs: [build_and_test, deploy]
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Test Failure Notification
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Build Failed! The pipeline encountered an error."}' \
+          "${{ secrets.DISCORD_WEBHOOK }}"
