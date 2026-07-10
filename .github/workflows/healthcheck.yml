@@ -10,9 +10,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check the live deployment URL
-        uses: jasonmanning/url-health-check@v1.0.0
-        with:
-          url: ${{ secrets.RENDER_PRODUCTION_URL }} # Or paste your raw URL directly
-          follow-redirect: false
-          max-attempts: 3
-          retry-delay: 5s
+        run: |
+          curl --fail https://fullstackopen-cicd-o6rb.onrender.com
