@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Check the live deployment URL
         run: |
-          curl --fail https://fullstackopen-cicd-o6rb.onrender.com
+          curl --fail https://fullstackopen-cicd-o6rb.onrender.com/breakdown
